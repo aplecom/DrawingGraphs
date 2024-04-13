@@ -13,6 +13,8 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    BinarySearchTree.h \
+    TreeNode.h \
     mainwindow.h
 
 FORMS += \
