@@ -22,23 +22,41 @@ MainWindow::MainWindow(QWidget *parent)
     for(int i = 0 ; i < x1.size();++i)
     {
         x1[i] = xBegin+=100;
+
     }
 
+    // фиксируем ось x с шагом 100
+    QSharedPointer<QCPAxisTickerFixed> fixedTicker(new QCPAxisTickerFixed);
+    ui->widget->xAxis->setTicker(fixedTicker);
+    fixedTicker->setTickStep(100.0);
 
     // добавляем график на виджет с осями
-    ui->widget->addGraph(ui->widget->xAxis,ui->widget->yAxis);
+    QCPGraph *graph1 = ui->widget->addGraph(ui->widget->xAxis, ui->widget->yAxis);
+    //стиль разброса точек
+    graph1->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
+    // цвет линии графа 1
+    graph1->setPen(QPen(Qt::green));
+    // стрелочки
+    ui->widget->xAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
+    ui->widget->yAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
+
+
+
+    // заголовок
+    ui->widget->plotLayout()->insertRow(0);
+    ui->widget->plotLayout()->addElement(0, 0, new QCPTextElement(ui->widget, "Runtime vs Theoretical Time", QFont("sans", 12, QFont::Bold)));
 
     // Называем оси
     ui->widget->xAxis->setLabel("Input Size");
     ui->widget->yAxis->setLabel("Time");
 
     // Устанавливаем отрезок от 100 до 1000 для X оси
-    ui->widget->xAxis->setRange(100, 1000);
+    ui->widget->xAxis->setRange(0, 1100);
     // Устанавливаем отрезок от 0 до maxY для Y оси
-    ui->widget->yAxis->setRange(0, maxY);
+    ui->widget->yAxis->setRange(0, maxY+0.000001);
 
     ui->widget->yAxis->setNumberFormat("f");
-    ui->widget->yAxis->setNumberPrecision(15);
+    ui->widget->yAxis->setNumberPrecision(8);
 
 
 
