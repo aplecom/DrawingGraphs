@@ -42,6 +42,19 @@ public:
         inorderTraversal(root, count);
         return count;
     }
+
+    void clear(TreeNode<T>* node){
+        if(node!=nullptr){
+            clear(node->getRight());
+            clear(node->getLeft());
+        }
+        delete node;
+    }
+
+    void clear(){
+        clear(root);
+        root = nullptr;
+    }
 };
 
 #endif // BINARYSEARCHTREE_H
