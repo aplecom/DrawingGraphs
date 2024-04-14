@@ -32,12 +32,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
     // создаем векторы осей
-    QVector<double> x1, y1;
+    QVector<double> x1, y1,y2;
     BinarySearchTree<int> tree;
     QVector<int> generateRandomValue(int countValue);
     void addValToTree(QVector<int> vector);
     double runtime();
     void allRuntime(QVector<double> &yAxis);
-
+    void MNK(QVector<double> &yAxis2);
 };
 #endif // MAINWINDOW_H

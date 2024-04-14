@@ -8,8 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // инициализируем вектора
-    x1.resize(10), y1.resize(10);
-
+    x1.resize(10), y1.resize(10),y2.resize(10);
 
     // заполняем 10 координат по оси Y временем выполнения
     allRuntime(y1);
@@ -25,21 +24,45 @@ MainWindow::MainWindow(QWidget *parent)
 
     }
 
+     // заполняем 10 координат по оси Y временем МНК
+     MNK(y2);
+
     // фиксируем ось x с шагом 100
     QSharedPointer<QCPAxisTickerFixed> fixedTicker(new QCPAxisTickerFixed);
     ui->widget->xAxis->setTicker(fixedTicker);
     fixedTicker->setTickStep(100.0);
 
-    // добавляем график на виджет с осями
+    // настраиваем шрифт
+    QFont font;
+    font.setFamily("sans");
+    font.setPointSize(12);
+    font.setBold(true);
+
+    // добавляем график 1 на виджет с осями
     QCPGraph *graph1 = ui->widget->addGraph(ui->widget->xAxis, ui->widget->yAxis);
     //стиль разброса точек
     graph1->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
     // цвет линии графа 1
     graph1->setPen(QPen(Qt::green));
+    // имя графика 1
+    graph1->setName("Runtime");
+
+    // добавляем график 2 на виджет с осями
+    QCPGraph *graph2 = ui->widget->addGraph(ui->widget->xAxis, ui->widget->yAxis);
+    //стиль разброса точек
+    graph2->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
+    // цвет линии графа 2
+    graph2->setPen(QPen(Qt::red));
+    // имя графика 2
+    graph2->setName("Theoretical Time");
+
+    // ставим шрифт на оси
+    ui->widget->xAxis->setLabelFont(font);
+    ui->widget->yAxis->setLabelFont(font);
+
     // стрелочки
     ui->widget->xAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
     ui->widget->yAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
-
 
 
     // заголовок
@@ -55,10 +78,13 @@ MainWindow::MainWindow(QWidget *parent)
     // Устанавливаем отрезок от 0 до maxY для Y оси
     ui->widget->yAxis->setRange(0, maxY+0.000001);
 
+    // избавляемся от научной нотации
     ui->widget->yAxis->setNumberFormat("f");
     ui->widget->yAxis->setNumberPrecision(8);
 
-
+    // Включаю легенду и её положение
+    ui->widget->legend->setVisible(true);
+    ui->widget->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignTop | Qt::AlignLeft);
 
 }
 
@@ -140,6 +166,30 @@ void MainWindow::allRuntime( QVector<double> &yAxis)
     }
 }
 
+void MainWindow::MNK(QVector<double> &yAxis2)
+{
+    // Получаем количество элементов в векторе
+    int n = x1.size();
+
+    // Вычисляем суммы и средние значения
+    double sumXY = 0, sumXX = 0;
+    for (int i = 0; i < n; ++i) {
+        sumXY += x1[i] * y1[i];
+        sumXX += x1[i] * x1[i];
+    }
+    double meanX = std::accumulate(x1.begin(), x1.end(), 0.0) / n;
+    double meanY = std::accumulate(y1.begin(), y1.end(), 0.0) / n;
+
+    // Вычисляем коэффициенты МНК
+    double m = (sumXY - n * meanX * meanY) / (sumXX - n * meanX * meanX);
+    double b = meanY - m * meanX;
+
+    // Рассчитываем значения y2 с использованием линии регрессии
+    for (int i = 0; i < n; ++i) {
+        yAxis2[i] = m * x1[i] + b;
+    }
+}
+
 
 void MainWindow::on_pushButton_clicked()
 {
@@ -151,6 +201,7 @@ void MainWindow::on_pushButton_clicked()
     connect(timer,&QTimer::timeout,[=](){
         if(dataIndex<y1.size()){
             ui->widget->graph(0)->addData(x1[dataIndex],y1[dataIndex]);
+            ui->widget->graph(1)->addData(x1[dataIndex],y2[dataIndex]);
             ui->widget->replot();
             dataIndex++;}
             else
