@@ -7,9 +7,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // инициализируем вектора
+    x1.resize(10), y1.resize(10);
 
-    // создаем векторы осей
-    QVector<double> x1(10), y1(10);
 
     // заполняем 10 координат по оси Y временем выполнения
     allRuntime(y1);
@@ -27,8 +27,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // добавляем график на виджет с осями
     ui->widget->addGraph(ui->widget->xAxis,ui->widget->yAxis);
-    // устанавливаем данные для графика - > оси
-    ui->widget->graph(0)->setData(x1,y1);
 
     // Называем оси
     ui->widget->xAxis->setLabel("Input Size");
@@ -39,9 +37,11 @@ MainWindow::MainWindow(QWidget *parent)
     // Устанавливаем отрезок от 0 до maxY для Y оси
     ui->widget->yAxis->setRange(0, maxY);
 
+    ui->widget->yAxis->setNumberFormat("f");
+    ui->widget->yAxis->setNumberPrecision(15);
 
 
-    ui->widget->replot();
+
 }
 
 MainWindow::~MainWindow()
@@ -75,27 +75,33 @@ void MainWindow::addValToTree(QVector<int> vector)
 
 double MainWindow::runtime()
 {
-    QElapsedTimer timer;
-    qint64 totalTime = 0;
-    qint64 times[12];
+    using namespace std::chrono;
 
-    for(int i = 0; i<12; ++i){
-        timer.start();
+    steady_clock::time_point start, end;
+    duration<double> totalTime(0);
+    double minTime = std::numeric_limits<double>::max();
+    double maxTime = 0;
+
+    for(int i = 0; i < 12; ++i){
+        start = steady_clock::now();
         int count = tree.countNodesWithTwoChildren();
-        times[i]=timer.elapsed();
-        totalTime+=times[i];
+        end = steady_clock::now();
+        duration<double> elapsedTime = end - start; // затрачееное время
+        totalTime += elapsedTime;
+        minTime = std::min(minTime, elapsedTime.count());
+        maxTime = std::max(maxTime, elapsedTime.count());
     }
+    totalTime -= duration<double>(minTime);
+    totalTime -= duration<double>(maxTime);
 
-    qint64 minTime = *std::min_element(times, times + 12);
-    qint64 maxTime = *std::max_element(times, times + 12);
 
-    totalTime-=minTime;
-    totalTime-=maxTime;
 
-    double averageTime = static_cast<double>(totalTime) / (10.0 * 1000.0);
+    double averageTime = totalTime.count() / 10.0;
 
     return averageTime;
 }
+
+
 
 void MainWindow::allRuntime( QVector<double> &yAxis)
 {
@@ -117,8 +123,20 @@ void MainWindow::allRuntime( QVector<double> &yAxis)
 }
 
 
-
 void MainWindow::on_pushButton_clicked()
 {
-    // сделать постепенное построение по таймеру
+
+    QTimer* timer = new QTimer(this);
+    timer->setInterval(100);
+    static int dataIndex  = 0;
+
+    connect(timer,&QTimer::timeout,[=](){
+        if(dataIndex<y1.size()){
+            ui->widget->graph(0)->addData(x1[dataIndex],y1[dataIndex]);
+            ui->widget->replot();
+            dataIndex++;}
+            else
+                timer->stop();
+                   });
+        timer->start();
 }
